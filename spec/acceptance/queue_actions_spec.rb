@@ -2,60 +2,82 @@ require "spec_helper"
 
 describe "Actions for Queues", :sqs do
 
-  let(:sqs) { AWS::SQS.new }
+  let(:sqs) { Aws::SQS::Client.new }
+  let(:resource) { Aws::SQS::Resource.new }
+
+  def create_queue(name)
+    resource.queue(sqs.create_queue(queue_name: name).queue_url)
+  end
 
   specify "CreateQueue" do
-    queue = sqs.queues.create("test-create-queue")
+    queue = create_queue "test-create-queue"
+
     queue.url.should eq "http://0.0.0.0:4568/test-create-queue"
-    queue.arn.should match %r"arn:aws:sqs:us-east-1:.+:test-create-queue"
+    queue.attributes['QueueArn'].should match %r"arn:aws:sqs:us-east-1:.+:test-create-queue"
   end
 
   specify "GetQueueUrl" do
-    sqs.queues.create("test-get-queue-url")
-    queue = sqs.queues.named("test-get-queue-url")
+    create_queue "test-get-queue-url"
+
+    queue = resource.get_queue_by_name(queue_name: "test-get-queue-url")
     queue.url.should eq "http://0.0.0.0:4568/test-get-queue-url"
   end
 
   specify "ListQueues" do
-    sqs.queues.create("test-list-1")
-    sqs.queues.create("test-list-2")
-    sqs.queues.map(&:url).should eq [
+    create_queue "test-list-1"
+    create_queue "test-list-2"
+
+    sqs.list_queues.queue_urls.should eq [
       "http://0.0.0.0:4568/test-list-1",
       "http://0.0.0.0:4568/test-list-2"
     ]
   end
 
   specify "ListQueues with prefix" do
-    sqs.queues.create("test-list-1")
-    sqs.queues.create("test-list-2")
-    sqs.queues.create("other-list-3")
-    sqs.queues.with_prefix("test").map(&:url).should eq [
+    create_queue "test-list-1"
+    create_queue "test-list-2"
+    create_queue "other-list-3"
+
+    sqs.list_queues(queue_name_prefix: "test").queue_urls.should eq [
       "http://0.0.0.0:4568/test-list-1",
       "http://0.0.0.0:4568/test-list-2",
     ]
   end
 
   specify "DeleteQueue" do
-    url = sqs.queues.create("test-delete").url
-    sqs.should have(1).queues
-    sqs.queues[url].delete
-    sqs.should have(0).queues
+    url = create_queue("test-delete").url
+    expect(sqs.list_queues.queue_urls.size).to eq 1
+
+    resource.queue(url).delete
+    expect(sqs.list_queues.queue_urls.size).to eq 0
   end
 
   specify "SetQueueAttributes / GetQueueAttributes" do
+    queue = create_queue "my-queue"
+    policy = {
+      Version: "2008-10-17",
+      Id: "#{queue.attributes['QueueArn']}/SQSDefaultPolicy",
+      Statement: [
+        {
+          Effect: "Allow",
+          Principal: {
+            AWS: "*"
+          },
+          Action: ["SQS:SendMessage"],
+          Resource: "#{queue.attributes['QueueArn']}"
+        }
+      ]
+    }
 
-    policy = AWS::SQS::Policy.new
-    policy.allow(
-      :actions => ['s3:PutObject'],
-      :resources => "arn:aws:s3:::mybucket/mykey/*",
-      :principals => :any
-    ).where(:acl).is("public-read")
+    sqs.set_queue_attributes(
+      queue_url: queue.url,
+      attributes: {
+        Policy: policy.to_json
+      }
+    )
 
-    queue = sqs.queues.create("my-queue")
-    queue.policy = policy
-
-    reloaded_queue = sqs.queues.named("my-queue")
-    reloaded_queue.policy.should eq policy
+    reloaded_policy = resource.get_queue_by_name(queue_name: "my-queue").attributes['Policy']
+    JSON.parse(reloaded_policy, symbolize_names: true).should eq policy
   end
 
 end

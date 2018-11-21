@@ -1,12 +1,10 @@
-require "aws-sdk"
+require "aws-sdk-sqs"
 require "fake_sqs/test_integration"
 
-AWS.config(
-  :use_ssl           => false,
-  :sqs_endpoint      => "localhost",
-  :sqs_port          => 4568,
-  :access_key_id     => "fake access key",
-  :secret_access_key => "fake secret key",
+Aws.config.update(
+  endpoint: 'http://localhost:4568',
+  access_key_id: 'fake access key',
+  secret_access_key: 'fake secret key'
 )
 
 db = ENV["SQS_DATABASE"] || ":memory:"

@@ -10,11 +10,11 @@ module FakeSQS
     end
 
     def host
-      option :sqs_endpoint
+      URI(option :endpoint).host
     end
 
     def port
-      option :sqs_port
+      URI(option :endpoint).port
     end
 
     def start
@@ -47,7 +47,7 @@ module FakeSQS
     end
 
     def url
-      "http://#{host}:#{port}"
+      option :endpoint
     end
 
     def up?
@@ -59,7 +59,7 @@ module FakeSQS
     private
 
     def option(key)
-      options.fetch(key) { AWS.config.public_send(key) }
+      options.fetch(key) { Aws.config[key] }
     end
 
     def database

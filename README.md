@@ -55,7 +55,7 @@ $ fake_sqs --help
 ```
 
 By default, FakeSQS uses an in-memory database (just a hash actually). To make
-it persistant, run with:
+it persistent, run with:
 
 ```
 $ fake_sqs --database /path/to/database.yml
@@ -63,16 +63,14 @@ $ fake_sqs --database /path/to/database.yml
 
 Messages are not persisted, just the queues.
 
-This is an example of how to configure the official [aws-sdk gem] [aws-sdk], to
-let it talk to Fake SQS.
+This is an example of how to configure the [AWS SDK for Ruby] [aws-sdk], to let
+it talk to Fake SQS.
 
 ``` ruby
-AWS.config(
-  :use_ssl           => false,
-  :sqs_endpoint      => "localhost",
-  :sqs_port          => 4568,
-  :access_key_id     => "access key id",
-  :secret_access_key => "secret access key"
+Aws.config.update(
+  sqs_endpoint: 'http://localhost:4568',
+  access_key_id: 'access key id',
+  secret_access_key: 'secret access key'
 )
 ```
 
@@ -105,12 +103,10 @@ Here are the methods you need to run FakeSQS programmatically.
 require "fake_sqs/test_integration"
 
 # globally, before the test suite starts:
-AWS.config(
-  use_ssl:            false,
-  sqs_endpoint:       "localhost",
-  sqs_port:           4568,
-  access_key_id:      "fake access key",
-  secret_access_key:  "fake secret key",
+Aws.config.update(
+  sqs_endpoint: 'http://localhost:4568',
+  access_key_id: 'fake access key',
+  secret_access_key: 'fake secret key'
 )
 fake_sqs = FakeSQS::TestIntegration.new
 
@@ -128,12 +124,10 @@ By starting it like this it will start when needed, and reset between each test.
 Here's an example for RSpec to put in `spec/spec_helper.rb`:
 
 ``` ruby
-AWS.config(
-  use_ssl:            false,
-  sqs_endpoint:       "localhost",
-  sqs_port:           4568,
-  access_key_id:      "fake access key",
-  secret_access_key:  "fake secret key",
+Aws.config.update(
+  sqs_endpoint: 'http://localhost:4568',
+  access_key_id: 'fake access key',
+  secret_access_key: 'fake secret key'
 )
 
 RSpec.configure do |config|
@@ -149,7 +143,7 @@ Now you can use the `:sqs metadata to enable SQS integration:
 ``` ruby
 describe "something with sqs", :sqs do
   it "should work" do
-    queue = AWS::SQS.new.queues.create("my-queue")
+    queue = Aws::SQS.new.queues.create("my-queue")
   end
 end
 ```
@@ -174,5 +168,5 @@ $ DEBUG=true SQS_DATABASE=tmp/sqs.yml rspec spec/acceptance
 
 
   [fake_dynamo]: https://github.com/ananthakumaran/fake_dynamo
-  [aws-sdk]: https://github.com/amazonwebservices/aws-sdk-for-ruby
+  [aws-sdk]: https://aws.amazon.com/sdk-for-ruby/
   [fake_sns]: https://github.com/yourkarma/fake_sns

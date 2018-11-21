@@ -21,13 +21,12 @@ Gem::Specification.new do |gem|
   gem.add_dependency "sinatra"
   gem.add_dependency "builder"
 
-  gem.add_development_dependency "rspec"
+  gem.add_development_dependency "rspec", "~> 2.14.1"
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rack-test"
-  gem.add_development_dependency "aws-sdk"
+  gem.add_development_dependency "aws-sdk-sqs"
   gem.add_development_dependency "faraday"
   gem.add_development_dependency "thin"
   gem.add_development_dependency "verbose_hash_fetch"
   gem.add_development_dependency "activesupport"
-
 end
