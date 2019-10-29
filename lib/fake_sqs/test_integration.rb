@@ -82,7 +82,7 @@ module FakeSQS
       end
     end
 
-    def wait_until_up(deadline = Time.now + 2)
+    def wait_until_up(deadline = options.fetch(:wait_until_up_time, Time.now + 2))
       fail "FakeSQS didn't start in time" if Time.now > deadline
       unless up?
         sleep 0.01
